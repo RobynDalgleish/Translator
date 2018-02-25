@@ -1,0 +1,6 @@
+.options {
+    display: none;
+    &.visible {
+        display: block;
+    }
+}
