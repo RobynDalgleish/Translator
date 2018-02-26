@@ -66,8 +66,11 @@ class App extends React.Component {
       chosenFolder: '',
       showSave: false,
       showFolder: false,
-      folders: [
-      ]
+      folders: {
+        Directions: [],
+        Greetings: [],
+        Food: []
+      }
     };
     this.setUserInput = this.setUserInput.bind(this);
     this.getTranslation = this.getTranslation.bind(this);
@@ -82,6 +85,12 @@ class App extends React.Component {
   getSavedTranslations() {
     // ask firebase for my saved translations
     const dbref = firebase.database().ref('/translations');
+
+    let tempFolders = {
+      Directions: [],
+      Greetings: [],
+      Food: []
+    }
 
     dbref.on('value', (snapshot) => {
       // console.log('hey');
@@ -98,11 +107,25 @@ class App extends React.Component {
           chosenLanguageToTranslateTo: data[key].chosenLanguageToTranslateTo,
           originalInputedText: data[key].originalInputedText,
         }
+
+        switch (saved.folderName) {
+          case "Directions":
+            tempFolders.Directions.push(saved)
+            break;
+          case "Greetings":
+            tempFolders.Greetings.push(saved)
+            break;
+          case "Food":
+            tempFolders.Food.push(saved)
+            break;
+        }
+
         state.push(saved);
       }
 
       this.setState({
-        translations: state
+        translations: state,
+        folders: tempFolders
       })
     });
   }
@@ -254,6 +277,7 @@ class App extends React.Component {
 
 
   render() {
+    console.log(this.state.folders)
     return (
       <main>
         <select onChange={this.setLanguageToTranslateTo} name="" id="lang-input" value={this.state.chosenLanguageToTranslateTo}>
@@ -275,8 +299,10 @@ class App extends React.Component {
               }
             </div>
           }
+
+          <h3>Directions</h3>
           {
-            this.state.translations.map((trns) => {
+            this.state.folders.Directions.map((trns) => {
               return (
                 <div key={trns.key ? trns.key : trns.translation}> 
                   <h2>Original text:</h2>
@@ -290,6 +316,44 @@ class App extends React.Component {
               )
             })
           }
+
+
+        <h3>Greetings</h3>
+        {
+          this.state.folders.Greetings.map((trns) => {
+            return (
+              <div key={trns.key ? trns.key : trns.translation}>
+                <h2>Original text:</h2>
+                <p>{trns.originalInputedText}</p>
+                <h2>Tranlated to:</h2>
+                <p>{trns.chosenLanguageToTranslateTo}</p>
+                <h2>Translation:</h2>
+                <p>{trns.translation}</p>
+              </div>
+
+            )
+          })
+        }
+
+
+        <h3>Food</h3>
+        {
+          this.state.folders.Food.map((trns) => {
+            return (
+              <div key={trns.key ? trns.key : trns.translation}>
+                <h2>Original text:</h2>
+                <p>{trns.originalInputedText}</p>
+                <h2>Tranlated to:</h2>
+                <p>{trns.chosenLanguageToTranslateTo}</p>
+                <h2>Translation:</h2>
+                <p>{trns.translation}</p>
+              </div>
+
+            )
+          })
+        }
+        
+
           { this.state.showFolder &&
             <div className={`options ${this.state.optionsVisible}`}>
             <h2>Choose a folder</h2>
