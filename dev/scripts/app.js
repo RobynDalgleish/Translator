@@ -1,6 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
+import Folders from './components/Folders';
+import languageNames from './langs';
+
 
 var config = {
   apiKey: "AIzaSyCCStLXTpOaxuVW1lWi8AVofesMj0pwiRk",
@@ -13,36 +16,8 @@ var config = {
 firebase.initializeApp(config);
 
 const apiURL = 'https://translation.googleapis.com/language/translate/v2';
-const key = 'AIzaSyCPkSIK_OMBmFr2M7N674sE3utUtTvSa10';
+const key = 'AIzaSyBGEE0q0ZAn4wYnw1m_r4oQ-5NOxCQOIpA';
 
-let languageNames = {
-  af : 'Afrikaans',
-  sq :'Albanian',
-  am : 'Amharic',
-  ar : 'Arabic',
-  hy : 'Armenian',
-  az : 'Azeerbaijani',
-  eu : 'Basque',
-  be : 'Belarusian',
-  bn : 'Bengali',
-  bs : 'Bosnian',
-  bg : 'Bulgarian',
-  ca : 'Catalan',
-  ceb : 'Cebuano',
-  zh : 'Chinese (Simplified)',
-  'zh-TW' : 'Chinese (Traditional)',
-  co : 'Corsican',
-  hr : 'Croatian',
-  cs : 'Czech',
-  da : 'Danish',
-  nl : 'Dutch',
-  en : 'English',
-  eo : 'Esperanto',
-  et : 'Estonian',
-  fi : 'Finnish',
-  fr : 'French',
-  fy : 'Frisian',
-};
 
 const Translation = (props) => {
   return (
@@ -66,7 +41,7 @@ class App extends React.Component {
       chosenFolder: '',
       showSave: false,
       showFolder: false,
-      folders: {
+      folders: {  
         Directions: [],
         Greetings: [],
         Food: []
@@ -79,7 +54,6 @@ class App extends React.Component {
     this.selectionChoice = this.selectionChoice.bind(this);
     this.saveInChosenFolder = this.saveInChosenFolder.bind(this);
     this.getSavedTranslations = this.getSavedTranslations.bind(this);
-    this.sortFolder = this.sortFolder.bind(this);
   }
 
   getSavedTranslations() {
@@ -93,10 +67,8 @@ class App extends React.Component {
     }
 
     dbref.on('value', (snapshot) => {
-      // console.log('hey');
 
       const data = snapshot.val();
-      const state = [];
 
       for (let key in data) {
         // Here we use the value stored in the key variable to access the object stored at that location, then we add a new property to thet object called key (confusing right?) and assign it the value of 'key'
@@ -119,13 +91,11 @@ class App extends React.Component {
             tempFolders.Food.push(saved)
             break;
         }
-
-        state.push(saved);
       }
 
       this.setState({
-        translations: state,
         folders: tempFolders
+
       })
     });
   }
@@ -139,7 +109,7 @@ class App extends React.Component {
     })
       .then((res) => {
         let languages = res.data.data.languages
-        languages.unshift({ language: 'Choose language...' })
+        languages.unshift({ language: "Choose language..." })
         this.setState({
           targetLanguages: languages
         });
@@ -227,54 +197,18 @@ class App extends React.Component {
 
       dbref.push(translationToAdd);
 
-      // this.sortFolder();
-
       // reset
       this.setState({
         showSave: false,
         showFolder: false,
         userInput: '',
-        // chosenLanguageToTranslateTo: 'Choose language...'
+        chosenLanguageToTranslateTo: 'Choose language...'
       })
 
     } else {
       alert("please choose folder")
     }    
-
-    
   }
-
-  sortFolder() {
-
-    let Greetings = []
-    let Food = []
-    let Directions = []
-    let folders = this.state.folders;
-
-    this.state.translations.map((trns) => {
-      switch (trns.folderName) {
-        case "Greetings":
-          Greetings.push(trns)        
-          break;
-        case "Directions":
-          Directions.push(trns)
-          break;
-        case "Food":
-          Food.push(trns)
-          break;
-      }
-    })
-
-    folders.push(
-      { Greetings: Greetings}, 
-      { Food: Food },
-      { Directions: Directions },
-    )
-
-    this.setState(folders: folders)
-  }
-
-
 
   render() {
     console.log(this.state.folders)
@@ -300,70 +234,17 @@ class App extends React.Component {
             </div>
           }
 
-          <h3>Directions</h3>
-          {
-            this.state.folders.Directions.map((trns) => {
-              return (
-                <div key={trns.key ? trns.key : trns.translation}> 
-                  <h2>Original text:</h2>
-                  <p>{trns.originalInputedText}</p>
-                  <h2>Tranlated to:</h2>
-                  <p>{trns.chosenLanguageToTranslateTo}</p>
-                  <h2>Translation:</h2>
-                  <p>{trns.translation}</p>
-                </div>
-
-              )
-            })
-          }
-
-
-        <h3>Greetings</h3>
-        {
-          this.state.folders.Greetings.map((trns) => {
-            return (
-              <div key={trns.key ? trns.key : trns.translation}>
-                <h2>Original text:</h2>
-                <p>{trns.originalInputedText}</p>
-                <h2>Tranlated to:</h2>
-                <p>{trns.chosenLanguageToTranslateTo}</p>
-                <h2>Translation:</h2>
-                <p>{trns.translation}</p>
-              </div>
-
-            )
-          })
-        }
-
-
-        <h3>Food</h3>
-        {
-          this.state.folders.Food.map((trns) => {
-            return (
-              <div key={trns.key ? trns.key : trns.translation}>
-                <h2>Original text:</h2>
-                <p>{trns.originalInputedText}</p>
-                <h2>Tranlated to:</h2>
-                <p>{trns.chosenLanguageToTranslateTo}</p>
-                <h2>Translation:</h2>
-                <p>{trns.translation}</p>
-              </div>
-
-            )
-          })
-        }
-        
-
+          <Folders folders={this.state.folders} />
           { this.state.showFolder &&
             <div className={`options ${this.state.optionsVisible}`}>
-            <h2>Choose a folder</h2>
-            <div onChange={this.selectionChoice}>
-                <input type="radio" name="folderChoice" id="greetings" value="Greetings" required />
-                <label className="" htmlFor="greetings">Greetings</label>
-              <input type="radio" name="folderChoice" id="directions" value="Directions" required />
-                <label className="" htmlFor="directions">Directions</label>
-              <input type="radio" name="folderChoice" id="food" value="Food" required />
-                <label className="" htmlFor="food">Food</label>
+              <h2>Choose a folder</h2>
+              <div onChange={this.selectionChoice}>
+                  <input type="radio" name="folderChoice" id="greetings" value="Greetings" required />
+                  <label className="" htmlFor="greetings">Greetings</label>
+                <input type="radio" name="folderChoice" id="directions" value="Directions" required />
+                  <label className="" htmlFor="directions">Directions</label>
+                <input type="radio" name="folderChoice" id="food" value="Food" required />
+                  <label className="" htmlFor="food">Food</label>
               </div>
               <button onClick={this.saveInChosenFolder}>That's the one!</button>
             </div>
