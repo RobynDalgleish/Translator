@@ -64,8 +64,8 @@ class App extends React.Component {
       userInput: '',
       optionsVisible: null,
       chosenFolder: '',
-      showSave: true,
-      showFolder: true,
+      showSave: false,
+      showFolder: false,
       folders: [
       ]
     };
@@ -144,7 +144,8 @@ class App extends React.Component {
             }
             newState.unshift(newestTranslation);
             this.setState({
-              currentTranslation: res.data.data.translations[0].translatedText
+              currentTranslation: res.data.data.translations[0].translatedText,
+              showSave: true
             })
           });   
       } else {
@@ -177,7 +178,8 @@ class App extends React.Component {
   showSaveOptions(translation) {
     this.setState({
       optionsVisible: 'visible',
-      currentlySavingTranslation: translation
+      currentlySavingTranslation: translation,
+      showFolder: true
     })
   }
 
@@ -192,27 +194,31 @@ class App extends React.Component {
       
       // save translation to firebase
       const dbref = firebase.database().ref('/translations');
+
       const translationToAdd = {
         originalInputedText: this.state.userInput,
         chosenLanguageToTranslateTo: this.state.languageToTranslateTo,
         translation: this.state.currentlySavingTranslation,
         folderName: this.state.chosenFolder
       };
+
       dbref.push(translationToAdd);
+
+      // this.sortFolder();
 
       // reset
       this.setState({
         showSave: false,
         showFolder: false,
         userInput: '',
-        chosenLanguageToTranslateTo: 'Choose language...'
+        // chosenLanguageToTranslateTo: 'Choose language...'
       })
-
-      this.sortFolder();
 
     } else {
       alert("please choose folder")
     }    
+
+    
   }
 
   sortFolder() {
@@ -223,7 +229,6 @@ class App extends React.Component {
     let folders = this.state.folders;
 
     this.state.translations.map((trns) => {
-      debugger
       switch (trns.folderName) {
         case "Greetings":
           Greetings.push(trns)        
@@ -249,7 +254,6 @@ class App extends React.Component {
 
 
   render() {
-    console.log(this.state.folders)
     return (
       <main>
         <select onChange={this.setLanguageToTranslateTo} name="" id="lang-input" value={this.state.chosenLanguageToTranslateTo}>
@@ -286,25 +290,20 @@ class App extends React.Component {
               )
             })
           }
-          { this.state.showFolder ? (
-          <div className={`options ${this.state.optionsVisible}`}>
-          <h2>Choose a folder</h2>
-          <div onChange={this.selectionChoice}>
-              <input type="radio" name="folderChoice" id="greetings" value="Greetings" required />
-              <label className="" htmlFor="greetings">Greetings</label>
-            <input type="radio" name="folderChoice" id="directions" value="Directions" required />
-              <label className="" htmlFor="directions">Directions</label>
-            <input type="radio" name="folderChoice" id="food" value="Food" required />
-              <label className="" htmlFor="food">Food</label>
+          { this.state.showFolder &&
+            <div className={`options ${this.state.optionsVisible}`}>
+            <h2>Choose a folder</h2>
+            <div onChange={this.selectionChoice}>
+                <input type="radio" name="folderChoice" id="greetings" value="Greetings" required />
+                <label className="" htmlFor="greetings">Greetings</label>
+              <input type="radio" name="folderChoice" id="directions" value="Directions" required />
+                <label className="" htmlFor="directions">Directions</label>
+              <input type="radio" name="folderChoice" id="food" value="Food" required />
+                <label className="" htmlFor="food">Food</label>
+              </div>
+              <button onClick={this.saveInChosenFolder}>That's the one!</button>
             </div>
-            <button onClick={this.saveInChosenFolder}>That's the one!</button>
-          </div>
-          ) : null
           }
-
-          {/* this.state.translations.map((item, i) => {
-            if item.folder === 'directions'
-          }) */}
           
       </main>
     )
