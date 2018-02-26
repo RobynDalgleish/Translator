@@ -17,7 +17,31 @@ const key = 'AIzaSyCPkSIK_OMBmFr2M7N674sE3utUtTvSa10';
 
 let languageNames = {
   af : 'Afrikaans',
-  fr : 'French'
+  sq :'Albanian',
+  am : 'Amharic',
+  ar : 'Arabic',
+  hy : 'Armenian',
+  az : 'Azeerbaijani',
+  eu : 'Basque',
+  be : 'Belarusian',
+  bn : 'Bengali',
+  bs : 'Bosnian',
+  bg : 'Bulgarian',
+  ca : 'Catalan',
+  ceb : 'Cebuano',
+  zh : 'Chinese (Simplified)',
+  'zh-TW' : 'Chinese (Traditional)',
+  co : 'Corsican',
+  hr : 'Croatian',
+  cs : 'Czech',
+  da : 'Danish',
+  nl : 'Dutch',
+  en : 'English',
+  eo : 'Esperanto',
+  et : 'Estonian',
+  fi : 'Finnish',
+  fr : 'French',
+  fy : 'Frisian',
 };
 
 const Translation = (props) => {
@@ -40,6 +64,10 @@ class App extends React.Component {
       userInput: '',
       optionsVisible: null,
       chosenFolder: '',
+      showSave: true,
+      showFolder: true,
+      folders: [
+      ]
     };
     this.setUserInput = this.setUserInput.bind(this);
     this.getTranslation = this.getTranslation.bind(this);
@@ -47,7 +75,36 @@ class App extends React.Component {
     this.showSaveOptions = this.showSaveOptions.bind(this);
     this.selectionChoice = this.selectionChoice.bind(this);
     this.saveInChosenFolder = this.saveInChosenFolder.bind(this);
+    this.getSavedTranslations = this.getSavedTranslations.bind(this);
+    this.sortFolder = this.sortFolder.bind(this);
+  }
 
+  getSavedTranslations() {
+    // ask firebase for my saved translations
+    const dbref = firebase.database().ref('/translations');
+
+    dbref.on('value', (snapshot) => {
+      // console.log('hey');
+
+      const data = snapshot.val();
+      const state = [];
+
+      for (let key in data) {
+        // Here we use the value stored in the key variable to access the object stored at that location, then we add a new property to thet object called key (confusing right?) and assign it the value of 'key'
+        let saved = {
+          translation: data[key].translation,
+          key: key,
+          folderName: data[key].folderName,
+          chosenLanguageToTranslateTo: data[key].chosenLanguageToTranslateTo,
+          originalInputedText: data[key].originalInputedText,
+        }
+        state.push(saved);
+      }
+
+      this.setState({
+        translations: state
+      })
+    });
   }
 
   componentDidMount() {
@@ -65,27 +122,7 @@ class App extends React.Component {
         });
       });
 
-    const dbref = firebase.database().ref('/translations');
-
-    dbref.on('value', (snapshot) => {
-      // console.log('hey');
-      const data = snapshot.val();
-      const state = [];
-      for (let key in data) {
-        // Here we use the value stored in the key variable to access the object stored at that location, then we add a new property to thet object called key (confusing right?) and assign it the value of 'key'
-        let saved = {
-          translation: data[key].translation,
-          key: key,
-          folderName: data[key].folderName,
-          chosenLanguageToTranslateTo: data[key].chosenLanguageToTranslateTo,
-          originalInputedText: data[key].originalInputedText,
-        }
-        state.push(saved);
-      }
-      this.setState({
-        translations: state
-      })
-    });
+    this.getSavedTranslations()
   }
 
   getTranslation(){
@@ -107,7 +144,6 @@ class App extends React.Component {
             }
             newState.unshift(newestTranslation);
             this.setState({
-              // translations: newState,
               currentTranslation: res.data.data.translations[0].translatedText
             })
           });   
@@ -138,12 +174,11 @@ class App extends React.Component {
     });
   }
 
-  showSaveOptions(translation){
-    console.log(translation)
+  showSaveOptions(translation) {
     this.setState({
       optionsVisible: 'visible',
       currentlySavingTranslation: translation
-    });
+    })
   }
 
   selectionChoice(e){
@@ -154,6 +189,8 @@ class App extends React.Component {
 
   saveInChosenFolder(){
     if (this.state.chosenFolder !== "") {
+      
+      // save translation to firebase
       const dbref = firebase.database().ref('/translations');
       const translationToAdd = {
         originalInputedText: this.state.userInput,
@@ -161,31 +198,78 @@ class App extends React.Component {
         translation: this.state.currentlySavingTranslation,
         folderName: this.state.chosenFolder
       };
-      console.log(translationToAdd)
       dbref.push(translationToAdd);
+
+      // reset
+      this.setState({
+        showSave: false,
+        showFolder: false,
+        userInput: '',
+        chosenLanguageToTranslateTo: 'Choose language...'
+      })
+
+      this.sortFolder();
+
     } else {
       alert("please choose folder")
     }    
   }
 
+  sortFolder() {
+
+    let Greetings = []
+    let Food = []
+    let Directions = []
+    let folders = this.state.folders;
+
+    this.state.translations.map((trns) => {
+      debugger
+      switch (trns.folderName) {
+        case "Greetings":
+          Greetings.push(trns)        
+          break;
+        case "Directions":
+          Directions.push(trns)
+          break;
+        case "Food":
+          Food.push(trns)
+          break;
+      }
+    })
+
+    folders.push(
+      { Greetings: Greetings}, 
+      { Food: Food },
+      { Directions: Directions },
+    )
+
+    this.setState(folders: folders)
+  }
+
+
 
   render() {
+    console.log(this.state.folders)
     return (
       <main>
-        <select onChange={this.setLanguageToTranslateTo} name="" id="lang-input">
+        <select onChange={this.setLanguageToTranslateTo} name="" id="lang-input" value={this.state.chosenLanguageToTranslateTo}>
             {
               this.state.targetLanguages.map((lng, index) => {
                 return <option key={index} value={lng.language}>{languageNames[lng.language] !== undefined ? languageNames[lng.language] : lng.language}</option>
               })
           }
           </select>
-          <input onChange = {this.setUserInput} type="text" name="" id=""/>
+          <input onChange = {this.setUserInput} type="text" name="" id="" value={this.state.userInput}/>
           <button onClick = {this.getTranslation} >translate</button>
-          <p>{this.state.currentTranslation}</p>
-          {
-          this.state.currentTranslation !== ''
-            ? <button onClick={() => this.showSaveOptions(this.state.currentTranslation)}>Save Me</button>
-              : null
+          { this.state.showSave &&
+            <div>
+              <p>{this.state.currentTranslation}</p>
+              {
+                this.state.currentTranslation !== ''
+                  ? <button onClick={() => this.showSaveOptions(this.state.currentTranslation)}>Save Me</button>
+                  : null
+              }
+            </div>
           }
           {
             this.state.translations.map((trns) => {
@@ -198,11 +282,11 @@ class App extends React.Component {
                   <h2>Translation:</h2>
                   <p>{trns.translation}</p>
                 </div>
+
               )
             })
           }
-          
-          {/* this will be a modal/popup */}
+          { this.state.showFolder ? (
           <div className={`options ${this.state.optionsVisible}`}>
           <h2>Choose a folder</h2>
           <div onChange={this.selectionChoice}>
@@ -215,6 +299,12 @@ class App extends React.Component {
             </div>
             <button onClick={this.saveInChosenFolder}>That's the one!</button>
           </div>
+          ) : null
+          }
+
+          {/* this.state.translations.map((item, i) => {
+            if item.folder === 'directions'
+          }) */}
           
       </main>
     )
