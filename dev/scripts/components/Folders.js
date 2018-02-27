@@ -1,64 +1,142 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Folder from "./Folder"
+import Content from "./Content"
 
 class Folders extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            Greetings: [],
-            Food: [],
-            Directions: [],
+            basics: [],
+            practical: [],
+            social: [],
+            safeTravel: [],
+            food: [],
+            other: [],
             loadReady: false,
+            showContents: false
         }
+        this.showContents = this.showContents.bind(this);
     }
 
     componentWillReceiveProps(NewProps) {
 
-
         let folders = NewProps.folders;
 
-
-        let Greetings = NewProps.folders.Greetings;
-        let Food = NewProps.folders.Food; 
-        let Directions = NewProps.folders.Directions;
+        let basics = NewProps.folders.basics;
+        let practical = NewProps.folders.practical; 
+        let social = NewProps.folders.social;
+        let safeTravel = NewProps.folders.safeTravel;
+        let food = NewProps.folders.food;
+        let other = NewProps.folders.other;
 
         this.setState({
-            Greetings: Greetings, Food: Food, Directions: Directions
+            basics: basics, 
+            practical: practical, 
+            social: social,
+            safeTravel: safeTravel,
+            food: food,
+            other: other
         }, function() {
             this.setState({loadReady: true})
         })
     }
 
+    showContents() {
+        console.log(this.state.showContents)
+        console.log(this.state)
+        this.state.showContents = false ? this.setState({showContents: true}) : null;
+    }
+
     render() {
         return (<div>
             { this.state.loadReady &&
-             <div>
-                <h2>Greetings:</h2>
-                    {this.state.Greetings.map((trns, i) => {
-                        return (
-                            <div key={i}>
-                                <Folder trns={trns} />
-                            </div>
-                        )  
-               })}
-                <h2>Food:</h2>
-                    {this.state.Food.map((trns, i) => {
-                        return (
-                            <div key={i}>
-                                <Folder trns={trns} />
-                            </div>
-                        )  
-                    })}
-                <h2>Directions:</h2>
-                    {this.state.Directions.map((trns, i) => {
-                        return (
-                            <div key={i}>
-                                <Folder trns={trns} />
-                            </div>
-                        )  
-                    })}
-               </div>
+                <div className="foldersWrap">
+                <button className="folders" onClick={this.showContents}>
+                    <div className="tape">
+                        <h2>basics</h2>
+                    </div>
+                    <div className= "content-container">
+                        {this.state.basics.map((trns, i) => {
+                            return (
+                                <div key={i}>
+                                    <Content trns={trns} />
+                                </div>
+                            )  
+                        })}
+                    </div>
+                </button>
+                <button className="folders">
+                    <div className="tape">
+                        <h2>practical</h2>
+                    </div>
+                    <div className="content-container">
+                        {this.state.practical.map((trns, i) => {
+                            return (
+                                <div key={i}>
+                                    <Content trns={trns} />
+                                </div>
+                            )  
+                        })}
+                    </div>
+                </button>
+                <button className="folders">
+                    <div className="tape">
+                        <h2>social</h2>
+                    </div>
+                    <div className="content-container">
+                        {this.state.social.map((trns, i) => {
+                            return (
+                                <div key={i}>
+                                    <Content trns={trns} />
+                                </div>
+                            )  
+                        })}
+                    </div>
+                </button>
+                <button className="folders">
+                    <div className="tape">
+                        <h2>safe travel</h2>
+                    </div>
+                    <div className="content-container">
+                        {this.state.safeTravel.map((trns, i) => {
+                            return (
+                                <div key={i}>
+                                    <Content trns={trns} />
+                                </div>
+                            )
+                        })}
+                    </div>
+                    
+                </button>
+                <button className="folders">
+                    <div className="tape">
+                        <h2>food</h2>
+                    </div>
+                    <div className="content-container">
+                        {this.state.food.map((trns, i) => {
+                            return (
+                                <div key={i}>
+                                    <Content trns={trns} />
+                                </div>
+                            )
+                        })}
+                    </div>
+                </button>
+                <button className="folders">
+                    <div className="tape">
+                        <h2>other</h2>
+                    </div>
+                    <div className="content-container">
+                        {this.state.other.map((trns, i) => {
+                            return (
+                                <div key={i}>
+                                    <Content trns={trns} />
+                                </div>
+                            )
+                        })}
+                    </div>
+                </button>
+            </div>
             }     
         </div>
          

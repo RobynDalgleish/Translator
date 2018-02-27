@@ -1,24 +1,25 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import languageNames from '../langs';
+import languageNames from './langs';
 
-class Folder extends React.Component {
+class Content extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
         }
     }
+    
 
     render() {
-        return (<div>
-            <h2>Original gangsta:</h2>
+        return (<div className="content">
+            <h4>original text:</h4>
             <p>{this.props.trns.originalInputedText}</p>
-            <h2>Tranlated to:</h2>
+            <h4>translate into:</h4>
             <p>{languageNames[this.props.trns.chosenLanguageToTranslateTo] === undefined 
                 ? this.props.trns.chosenLanguageToTranslateTo 
                 : languageNames[this.props.trns.chosenLanguageToTranslateTo]}
             </p>
-            <h2>Translation:</h2>
+            <h4>translated text:</h4>
             <p>{this.props.trns.translation}</p>
         </div>
 
@@ -26,6 +27,6 @@ class Folder extends React.Component {
     }
 }
 
-export default Folder
+export default Content;
 
 
