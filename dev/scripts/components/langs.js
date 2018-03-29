@@ -87,5 +87,19 @@ export default {
     su: 'Sudanese',
     sw: 'Swahili',
     sv: 'Swedish',
-    
+    tl: 'Tagalog (Fillipino)',
+    tg: 'Tajik',
+    ta: 'Tamil',
+    te: 'Telugu',
+    th: 'Thai',
+    tr: 'Turkish',
+    uk: 'Ukranian',
+    ur: 'Urdu',
+    uz: 'Uzbek',
+    vi: 'Vietnamese',
+    cy: 'Welsh',
+    xh: 'Xhosa',
+    yi: 'Yiddish',
+    yo: 'Yoruba',
+    zu: 'Zulu'
 };

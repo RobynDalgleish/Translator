@@ -32,14 +32,11 @@ class App extends React.Component {
       chosenFolder: '',
       showSave: false,
       showFolder: false,
-      folders: {  
-        basics: [],
-        practical: [],
-        social: [],
-        safeTravel: [],
-        food: [],
-        other: []
-      }
+      folders: {
+      },
+      currentUser : null,
+      currentUserName : null,
+      chooseFolderMode : false
     };
 
     this.setUserInput = this.setUserInput.bind(this);
@@ -48,11 +45,122 @@ class App extends React.Component {
     this.showSaveOptions = this.showSaveOptions.bind(this);
     this.selectionChoice = this.selectionChoice.bind(this);
     this.saveInChosenFolder = this.saveInChosenFolder.bind(this);
-    this.getSavedTranslations = this.getSavedTranslations.bind(this);
+    this.signIn = this.signIn.bind(this);
+    this.signOut = this.signOut.bind(this);
+    this.chooseFolder = this.chooseFolder.bind(this);
+  }
+
+  signIn(){
+    console.log('signing in');
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt : 'select_account'
+    })
+
+    firebase.auth().signInWithPopup(provider).then(function (result) {
+      // This gives you a Google Access Token. You can use it to access the Google API.
+      const token = result.credential.accessToken;
+
+      // Get the signed-in user info.
+      const user = result.user;
+      console.log(user);
+      // ...
+    }).catch(function (error) {
+      // Error handling goes in here.
+      console.log(error)
+    });   
+  }
+
+  signOut(){
+    firebase.auth().signOut().then(function (success){
+      console.log("Signed Out!");
+    }, function(error){
+      console.log(error);
+    })
+  }
+
+  componentWillUnmount(){
+    console.log('unmount');
+    this.signOut();
   }
 
   // on load, make a call to the api to get supported languages 
   componentDidMount() {
+  
+    firebase.auth().onAuthStateChanged((user)=>{
+      // when the user changes/logs in/logs out, this function gets called
+
+      let path;
+      console.log(user);
+      //if a user signs in
+      if(user){
+        // set app state to current user
+        this.setState({
+          currentUser : user.uid,
+          currentUserName : user.displayName
+        })
+
+        // set up db update callback
+        path = `/users/${this.state.currentUser}`;
+      }
+
+      else{
+        path = '/public';
+        this.setState({
+          currentUser: null, 
+          // folders: {
+          //   basics: [],
+          //   practical: [],
+          //   social: [],
+          //   safeTravel: [],
+          //   food: [],
+          //   other: []
+          // }
+        });
+      }
+
+      let dbref = firebase.database().ref(path);
+
+      console.log(path);
+
+      dbref.on('value', (snapshot) => {
+        const data = snapshot.val().translations;
+
+        let userFolderNames = snapshot.val().customFolders;
+
+        let userFolders = {};
+
+        for(let userFolderName of userFolderNames){
+          userFolders[userFolderName] = [];
+        }
+
+        console.log(userFolders);
+
+        for (let key in data) {
+          // Here we use the value stored in the key variable to access the object stored at that location, then we add a new property to thet object called key, and assign it the value of 'key'
+          let saved = {
+            translation: data[key].translation,
+            key: key,
+            folderName: data[key].folderName,
+            chosenLanguageToTranslateTo: data[key].chosenLanguageToTranslateTo,
+            originalInputedText: data[key].originalInputedText,
+          }
+
+          userFolders[saved.folderName].push(saved);
+        }
+        // creates a tempFolders state
+        this.setState({
+          folders: userFolders
+        }, () => {
+          console.log(this.state.folders);
+        });
+
+      });
+
+    });
+
+    
+ 
     axios.get(`${apiURL}/languages`, {
       params: {
       key: key,
@@ -69,68 +177,11 @@ class App extends React.Component {
           targetLanguages: languages
         });
       });
+
     // call the function that gets saved data from firebase
-    this.getSavedTranslations()
   }
 
     // ask firebase for my saved translations
-  getSavedTranslations() {
-    const dbref = firebase.database().ref('/translations');
-
-    // arrays that the switch statement can push to in order to eventually become a state
-    
-    dbref.on('value', (snapshot) => {
-      let tempFolders = {
-        basics: [],
-        practical: [],
-        social: [],
-        safeTravel: [],
-        food: [],
-        other: []
-      }
-
-      const data = snapshot.val();
-
-      for (let key in data) {
-        // Here we use the value stored in the key variable to access the object stored at that location, then we add a new property to thet object called key, and assign it the value of 'key'
-        let saved = {
-          translation: data[key].translation,
-          key: key,
-          folderName: data[key].folderName,
-          chosenLanguageToTranslateTo: data[key].chosenLanguageToTranslateTo,
-          originalInputedText: data[key].originalInputedText,
-        }
-
-        // This takes the folderName, and checks to see if it matches the specified "case". If it does, it pushes to the specified temp folder, and breaks out of the switch statement
-        switch (saved.folderName) {
-          case "basics":
-            tempFolders.basics.push(saved)
-            break;
-          case "practical":
-            tempFolders.practical.push(saved)
-            break;
-          case "social":
-            tempFolders.social.push(saved)
-            break;
-          case "safeTravel":
-            tempFolders.safeTravel.push(saved)
-            break;
-          case "food":
-            tempFolders.food.push(saved)
-            break;
-          case "other":
-            tempFolders.other.push(saved)
-            break;
-        }
-      }
-
-      // creates a tempFolders state
-      this.setState({
-        folders: tempFolders
-      })
-
-    });
-  }
 
   // posting to API to get translation
   getTranslation(){
@@ -186,7 +237,8 @@ class App extends React.Component {
       // using parameter (this.state.currentTranslation)
       currentlySavingTranslation: translation,
       // makes radio buttons for folder options appear
-      showFolder: true
+      //showFolder: true
+      chooseFolderMode : true
     })
   }
 
@@ -203,7 +255,18 @@ class App extends React.Component {
       
       // save translation to firebase in translations "folder"
       // in the future, sort the translations into folders here, and then push to firebase
-      const dbref = firebase.database().ref('/translations');
+      //const dbref = firebase.database().ref('/translations');
+      let path;
+
+      if(this.state.currentUser !== null){
+        path = `/users/${this.state.currentUser}/translations`;
+      }
+
+      else{
+        path = `/public/translations`;
+      }
+      
+      const dbref = firebase.database().ref(path);
 
       // data to add to that "folder" or "path"
       const translationToAdd = {
@@ -234,15 +297,58 @@ class App extends React.Component {
     }    
   }
 
+  chooseFolder(e){
+    if(this.state.chooseFolderMode){
+      console.log(e.target.id);
+      this.setState({chosenFolder : e.target.id},()=>{
+        this.saveInChosenFolder();
+        this.setState({chooseFolderMode : false});
+      })
+    }
+    
+  }
+
+  addFolder(e){
+    let newFolderName = e.target.value;
+    console.log(e.target.value);
+    e.target.value = '';
+
+    let path;
+    if(!this.state.folders[newFolderName]){
+      let foldersState = this.state.folders;
+      foldersState[newFolderName] = [];
+      this.setState({folders : foldersState},()=>{
+        console.log(this.state);
+      });
+
+      if (this.state.currentUser !== null) {
+        path = `/users/${this.state.currentUser}/customFolders`;
+      }
+
+      else {
+        path = `/public/customFolders`;
+      }
+
+      let dbref = firebase.database().ref(path);
+      let folderNames = Object.keys(this.state.folders);
+      console.log(folderNames);
+      dbref.set(folderNames);
+    }
+  }
+
   render() {
     return (
       <main>
-        <select onChange={this.setLanguageToTranslateTo} name="" id="lang-input" value={this.state.languageToTranslateTo}>
+        <div className="user-login">
+          <button onClick = {this.state.currentUser !== null ? this.signOut : this.signIn}>{this.state.currentUser !== null ? `Sign Out ${this.state.currentUserName}` : 'Sign In'}</button>
+        </div>
+        <div className="input_container">
+          <select onChange={this.setLanguageToTranslateTo} name="" id="lang-input" value={this.state.languageToTranslateTo}>
             {
               this.state.targetLanguages.map((lng, index) => {
                 return <option key={index} value={lng.language}>{languageNames[lng.language] !== undefined ? languageNames[lng.language] : lng.language}</option>
               })
-          }
+            }
           </select>
           <input onChange = {this.setUserInput} type="text" name="" id="" value={this.state.userInput}/>
           <button onClick = {this.getTranslation}>translate</button>
@@ -256,37 +362,16 @@ class App extends React.Component {
               }
             </div>
           }
+        </div>
 
-          <Folders folders={this.state.folders} />
+          <Folders currentUser = {this.state.currentUser} addFolder = {this.addFolder.bind(this)} chooseFolderMode = {this.state.chooseFolderMode} chooseFolder = {this.chooseFolder} folders={this.state.folders} />
           {/* if showFolder is true, then */}
           { this.state.showFolder &&
             // .optionsVisible has a class that is display: block
             <div className={`${this.state.optionsVisible}`}>
               <h2>Choose a folder</h2>
-              {/* initiate selectionChoice function with event parameter*/}
-              <div onChange={this.selectionChoice}>
-                <input type="radio" name="folderChoice" id="basics" value="basics" required />
-                <label className="" htmlFor="basics">basics</label>
-
-                <input type="radio" name="folderChoice" id="practical" value="practical" required />
-                <label className="" htmlFor="practical">practical</label>
-
-                <input type="radio" name="folderChoice" id="social" value="social" required />
-                <label className="" htmlFor="social">social</label>
-
-                <input type="radio" name="folderChoice" id="safeTravel" value="safeTravel" required />
-                <label className="" htmlFor="safeTravel">safe travel</label>
-
-                <input type="radio" name="folderChoice" id="food" value="food" required />
-                <label className="" htmlFor="food">food</label>
-
-                <input type="radio" name="folderChoice" id="other" value="other" required />
-                <label className="" htmlFor="other">other</label>
-              </div>
-              <button onClick={this.saveInChosenFolder}>That's the one!</button>
             </div>
-          }
-          
+          }        
       </main>
     )
   }
