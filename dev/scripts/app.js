@@ -30,10 +30,9 @@ class App extends React.Component {
       userInput: '',
       optionsVisible: null,
       chosenFolder: '',
+      folders: { },
       showSave: false,
       showFolder: false,
-      folders: {
-      },
       currentUser : null,
       currentUserName : null,
       chooseFolderMode : false
@@ -48,10 +47,10 @@ class App extends React.Component {
     this.signIn = this.signIn.bind(this);
     this.signOut = this.signOut.bind(this);
     this.chooseFolder = this.chooseFolder.bind(this);
+    this.removeTranslation = this.removeTranslation.bind(this);
   }
 
   signIn(){
-    console.log('signing in');
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({
       prompt : 'select_account'
@@ -63,8 +62,6 @@ class App extends React.Component {
 
       // Get the signed-in user info.
       const user = result.user;
-      console.log(user);
-      // ...
     }).catch(function (error) {
       // Error handling goes in here.
       console.log(error)
@@ -73,15 +70,31 @@ class App extends React.Component {
 
   signOut(){
     firebase.auth().signOut().then(function (success){
-      console.log("Signed Out!");
     }, function(error){
       console.log(error);
     })
   }
 
   componentWillUnmount(){
-    console.log('unmount');
     this.signOut();
+  }
+
+  removeTranslation(folderName, translationId){
+    console.log(folderName, translationId);
+
+    let foldersCopy = this.state.folders;
+    let folderToEdit = foldersCopy[folderName].filter((translation)=>{
+      return (translation.key !== translationId);
+    })
+
+    foldersCopy[folderName] = folderToEdit; 
+
+    this.setState({
+      folders : foldersCopy
+    })
+
+    // re set folders in firebase
+
   }
 
   // on load, make a call to the api to get supported languages 
@@ -89,9 +102,7 @@ class App extends React.Component {
   
     firebase.auth().onAuthStateChanged((user)=>{
       // when the user changes/logs in/logs out, this function gets called
-
       let path;
-      console.log(user);
       //if a user signs in
       if(user){
         // set app state to current user
@@ -108,36 +119,24 @@ class App extends React.Component {
         path = '/public';
         this.setState({
           currentUser: null, 
-          // folders: {
-          //   basics: [],
-          //   practical: [],
-          //   social: [],
-          //   safeTravel: [],
-          //   food: [],
-          //   other: []
-          // }
         });
       }
 
       let dbref = firebase.database().ref(path);
 
-      console.log(path);
-
       dbref.on('value', (snapshot) => {
         const data = snapshot.val().translations;
 
         let userFolderNames = snapshot.val().customFolders;
-
         let userFolders = {};
 
         for(let userFolderName of userFolderNames){
           userFolders[userFolderName] = [];
         }
 
-        console.log(userFolders);
-
         for (let key in data) {
           // Here we use the value stored in the key variable to access the object stored at that location, then we add a new property to thet object called key, and assign it the value of 'key'
+
           let saved = {
             translation: data[key].translation,
             key: key,
@@ -148,18 +147,10 @@ class App extends React.Component {
 
           userFolders[saved.folderName].push(saved);
         }
-        // creates a tempFolders state
-        this.setState({
-          folders: userFolders
-        }, () => {
-          console.log(this.state.folders);
-        });
-
+        this.setState({ folders: userFolders });
       });
 
     });
-
-    
  
     axios.get(`${apiURL}/languages`, {
       params: {
@@ -177,11 +168,7 @@ class App extends React.Component {
           targetLanguages: languages
         });
       });
-
-    // call the function that gets saved data from firebase
   }
-
-    // ask firebase for my saved translations
 
   // posting to API to get translation
   getTranslation(){
@@ -229,15 +216,12 @@ class App extends React.Component {
       languageToTranslateTo: newLangToTranslateTo
     });
   }
-
   
   // passing parameter
   showSaveOptions(translation) {
     this.setState({
       // using parameter (this.state.currentTranslation)
       currentlySavingTranslation: translation,
-      // makes radio buttons for folder options appear
-      //showFolder: true
       chooseFolderMode : true
     })
   }
@@ -254,8 +238,6 @@ class App extends React.Component {
     if (this.state.chosenFolder !== "") {
       
       // save translation to firebase in translations "folder"
-      // in the future, sort the translations into folders here, and then push to firebase
-      //const dbref = firebase.database().ref('/translations');
       let path;
 
       if(this.state.currentUser !== null){
@@ -292,14 +274,12 @@ class App extends React.Component {
       })
 
     } else {
-      // if chosenFolder is an empty string then alert "please choose folder"
-      alert("please choose folder")
+      // if keyDown/onClick that is not on folder, exit choose folder, prompt save me
     }    
   }
 
   chooseFolder(e){
     if(this.state.chooseFolderMode){
-      console.log(e.target.id);
       this.setState({chosenFolder : e.target.id},()=>{
         this.saveInChosenFolder();
         this.setState({chooseFolderMode : false});
@@ -338,7 +318,10 @@ class App extends React.Component {
 
   render() {
     return (
-      <main>
+      <main className = 'main-container'>
+        <div className= {`choose-folder-overlay ${this.state.chooseFolderMode ? 'choose-folder-overlay-show' : null}`}>
+          <h4>Choose a folder...</h4>
+        </div>
         <div className="user-login">
           <button onClick = {this.state.currentUser !== null ? this.signOut : this.signIn}>{this.state.currentUser !== null ? `Sign Out ${this.state.currentUserName}` : 'Sign In'}</button>
         </div>
@@ -364,7 +347,14 @@ class App extends React.Component {
           }
         </div>
 
-          <Folders currentUser = {this.state.currentUser} addFolder = {this.addFolder.bind(this)} chooseFolderMode = {this.state.chooseFolderMode} chooseFolder = {this.chooseFolder} folders={this.state.folders} />
+          <Folders 
+            currentUser = {this.state.currentUser} 
+            addFolder = {this.addFolder.bind(this)} 
+            chooseFolderMode = {this.state.chooseFolderMode} 
+            chooseFolder = {this.chooseFolder} 
+            folders={this.state.folders} 
+            removeTranslation= {this.removeTranslation}
+          />
           {/* if showFolder is true, then */}
           { this.state.showFolder &&
             // .optionsVisible has a class that is display: block

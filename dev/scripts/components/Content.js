@@ -12,6 +12,9 @@ class Content extends React.Component {
 
     render() {
         return (<div className="content">
+            <div className="content-top">
+                <button onClick = {() => {this.props.removeTranslation(this.props.trns.folderName, this.props.trns.key)}} >X</button>
+            </div>
             <h4>original text:</h4>
             <p>{this.props.trns.originalInputedText}</p>
             <h4>translate into:</h4>

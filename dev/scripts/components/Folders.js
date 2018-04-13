@@ -32,7 +32,13 @@ class Folders extends React.Component {
                 <div className="foldersWrap">
                 {Object.keys(this.props.folders).map((folderName)=>{
                     return (
-                        <Folder chooseFolderMode = {this.props.chooseFolderMode} chooseFolder = {this.props.chooseFolder} folderName = {folderName} translations = {this.props.folders[folderName]}/>
+                        <Folder 
+                            chooseFolderMode = {this.props.chooseFolderMode} 
+                            chooseFolder = {this.props.chooseFolder} 
+                            folderName = {folderName} 
+                            translations = {this.props.folders[folderName]}
+                            removeTranslation = {this.props.removeTranslation}
+                        />
                     );
                 })}
                 {this.props.currentUser ?

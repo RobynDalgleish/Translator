@@ -12,6 +12,25 @@ body {
     display: block;
 }
 
+.main-container{
+    position : relative;
+}
+
+.choose-folder-overlay{
+    position : absolute;
+    width : 100%;
+    height : 100vh;
+    display : none;
+    flex-flow : column;
+    // overlay color 
+    background-color : lightgrey;
+}
+
+.choose-folder-overlay-show{
+    display : flex;
+    z-index : 1;
+}
+
 .foldersWrap {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -28,8 +47,8 @@ body {
             align-items: center;
             justify-content: center;
             border: none;
-            background-color: transparent;
-            // position: relative;
+            background-color: transparent;          
+
                 .tape {
                     background-image: url(../assets/tape.png);
                     background-size: contain;
@@ -42,7 +61,13 @@ body {
                     align-items: center;
                     justify-content: center;
                     text-align: center;
+                    position : relative;
                 }
+        }
+
+        .folder-choose{
+            position: relative;
+            z-index : 2;
         }
 }
 
@@ -56,13 +81,21 @@ h2 {
 }
 
 .content-container {
-    width: 80%;
+    //position : absolute;
+    width: 90%;
+    //   top : 0px;
+    //  left : 15%;
     margin: 0 auto;
-    background-image: url(../assets/paper.png);
-    background-size: 100%;
+    //margin-top : 30px;
+    // background-image: url(../assets/paper.png);
+    // background-size: 100%;
+    background-color : beige;
     background-repeat: repeat-y;
     padding-top: 20px;
     padding-bottom: 20px;
+    overflow-y : scroll;
+    max-height : 200px;  
+    z-index : 3;
 }
 
 // .input_container {

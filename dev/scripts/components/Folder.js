@@ -13,8 +13,6 @@ export class Folder extends React.Component{
     }
 
     showContents(e) {
-        console.log(this.state.showContents)
-        console.log(this.state)
 
         if (this.state.showContents) {
             this.setState({ showContents: false });
@@ -25,22 +23,31 @@ export class Folder extends React.Component{
     }
 
     render(){
+        console.log(this.props.chooseFolder);
         return (
-            <button id = {this.props.folderName} className="folders" onClick={this.props.chooseFolderMode ? this.props.chooseFolder : this.showContents}>
+            <div id = {this.props.folderName} className= {`folders ${this.props.chooseFolderMode ? 'folder-choose' : null}`} onClick={this.props.chooseFolderMode ? this.props.chooseFolder : this.showContents}>
                 <div className="tape">
                     <h2>{this.props.folderName}</h2>
                 </div>
-                <div className="content-container">
 
-                    {this.state.showContents ? this.props.translations.map((trns, i) => {
-                        return (
-                            <div key={i}>
-                                <Content trns={trns} />
-                            </div>
-                        )
-                    }) : null}
-                </div>
-            </button>
+                {this.state.showContents 
+                    ? <div className="content-container">
+
+                        {this.state.showContents ? this.props.translations.map((trns, i) => {
+                            return (
+                                <div key={i}>
+                                    <Content 
+                                        trns={trns}
+                                        removeTranslation = {this.props.removeTranslation}
+                                    />
+                                </div>
+                            )
+                        }) : null}
+                    </div>
+                    : null           
+                }
+
+            </div>
         );
     }
 }
