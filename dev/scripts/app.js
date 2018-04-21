@@ -93,7 +93,18 @@ class App extends React.Component {
       folders : foldersCopy
     })
 
-    // re set folders in firebase
+    let translationRef;
+    // grabs a firebase reference to translation at 
+    if(this.state.currentUser !== null){
+      translationRef = firebase.database().ref(`/users/${this.state.currentUser}/translations/${translationId}`);
+
+      // removes translation from database
+    }
+
+    else{
+      translationRef = firebase.database().ref(`/public/translations/${translationId}`)
+    }
+    translationRef.remove();
 
   }
 
